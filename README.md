@@ -96,6 +96,6 @@
 ```
 
 ### 别名配置
-由于脚本是python写的，每次运行都要使用python 的命令，非常麻烦，推荐使用别名
+由于脚本是python写的,且只支持python3，每次运行都要使用python 的命令，非常麻烦，推荐使用别名
 如 alias mgit='python3  (install home )/mgit.py',这样就可以直接使用mgit add,mgit status,mgit pull,mgit push,mgit checkout，非常方便。
 

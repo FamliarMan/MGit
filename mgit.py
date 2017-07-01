@@ -127,6 +127,9 @@ def load_info():
         if project.get("name") == cur_project_name:
             curProjectDir = project.get("path")
             curModules = get_all_module(project)
+    if not os.path.exists(curProjectDir):
+        print("Wrong path in project!")
+        sys.exit(XML_CONFIG_ERROR)
     # 加载配置信息
     global config
     cfg_element = root.find("config")
