@@ -3,10 +3,25 @@ import xml.dom.minidom
 import os
 import sys
 import time
+import shutil
+import signal
+from xml.etree import ElementTree as ET
 from os.path import expanduser
-curProjectDir = ""
+
+FILE_NOT_EXIST = 1
+XML_CONFIG_ERROR = 2
+ARGUMENT_ERROR = 3
+
+curProjectDir = None
+configFilePath = None
 curModules = []
 namePath = {}
+Tree = None
+
+
+# 按下ctrl+c时触发
+def handler(signal_num,frame):
+    sys.exit(signal_num)
 
 
 class Config:
@@ -14,39 +29,57 @@ class Config:
 
 
 class Module:
-    path = ""
-    branch = "develop"
-    name = ""
+    path = None
+    branch = None
+    init_branch = None
+    git = None
+    name = None
+    xml_element = None
+
+    def string(self):
+        print("Name：" + self.name)
+        print("Branch:"+self.branch)
+        print("git:"+self.git)
+        print("path:"+self.path)
+        print()
+
 
 config = Config()
 
 
-# 检查setting tag是否配置正确
-def check_root(root):
-    if root.hasAttribute("curProject"):
-        return True
-    print("Your 'setting' tag lack 'curProject' ")
-    return False
+def check_cur_project():
+    if curProjectDir is None:
+        print("You should specify a right project name in 'curProject'!")
+        sys.exit(XML_CONFIG_ERROR)
 
 
 # 检查project tag配置是否正确
 def check_project(project):
-    if (not project.hasAttribute("name")) or (not project.hasAttribute("path")):
-        print("Your project lack name tag or path tag! ")
-        return False
-    return True
+    if project.get("path") is None or project.get("name") is None:
+        print("Your project lack name or path!")
+        sys.exit(XML_CONFIG_ERROR)
+
+
+def check_module(mod):
+    if (mod.find("name") is None) or (mod.find("initBranch") is None) or (mod.find("git") is None):
+        print("Your module lack name or initBranch or git tag! ")
+        sys.exit(XML_CONFIG_ERROR)
 
 
 def get_all_module(project):
     res = []
     global namePath
-    modules = project.getElementsByTagName("module")
+    modules = project.findall("module")
     for mod in modules:
-        moduleVo = Module()
-        moduleVo.name = mod.childNodes[0].data.strip('\r').strip('\n').strip()
-        moduleVo.path = curProjectDir + moduleVo.name.strip('\r').strip('\n').strip()
-        namePath[moduleVo.name] = moduleVo.path
-        res.append(moduleVo)
+        check_module(mod)
+        mod_config = Module()
+        mod_config.name = mod.find("name").text
+        mod_config.init_branch = mod.find("initBranch").text
+        mod_config.git = mod.find("git").text
+        mod_config.path = curProjectDir + mod_config.name
+        mod_config.xml_element = mod
+        namePath[mod_config.name] = mod_config.path
+        res.append(mod_config)
     return res
 
 
@@ -59,46 +92,51 @@ def execute_cmd(cmd):
         print()
         global config
         if config.enter:
-            print("Press Enter To Continue")
+            print("\nPress Enter To Continue")
             input()
     return
 
 
+def get_tree():
+    global Tree
+    global configFilePath
+    configFilePath = os.path.join(expanduser("~"), ".mgit.xml")
+    try:
+        Tree = ET.parse(configFilePath)
+    except IOError:
+        print("Missing .mgit.xml file in your home directory!")
+        sys.exit(FILE_NOT_EXIST)
+
+
 # 从xml中解析信息
 def load_info():
-    res = []
     global curProjectDir
     global curModules
-    domTree= xml.dom.minidom.parse(os.path.join(expanduser("~"), ".mgit.xml"))
-    setting = domTree.documentElement
-    if not check_root(setting):
-        return res
-    curProjectName = setting.getAttribute("curProject")
-    projects = domTree.getElementsByTagName("project")
-    for project in projects:
-        if not check_project(project):
-            return res
-        if project.getAttribute("name") == curProjectName:
-            curProjectDir = project.getAttribute("path")
+    global Tree
+    global configFilePath
+    get_tree()
+    root = Tree.getroot()
+    cur_project_name = root.get("curProject")
+    if cur_project_name is None:
+        print("You didn't set a curProject tag!")
+        sys.exit(XML_CONFIG_ERROR)
+    all_projects = root.findall("project")
+    # 查找当前使用的是那个project
+    for project in all_projects:
+        check_project(project)
+        if project.get("name") == cur_project_name:
+            curProjectDir = project.get("path")
             curModules = get_all_module(project)
-            if len(curModules) == 0:
-                return
-            break
-
-    if len(curProjectDir) == 0:  # curProject设置不正确
-        print("Your curProject doesn't match any project!")
-        return
-    configXml = domTree.getElementsByTagName("config")
-    if len(configXml) == 0:
-        return
+    # 加载配置信息
     global config
-    enter = configXml[0].getElementsByTagName("enter")
-    if len(enter) == 0:
-        return
-    if enter[0].childNodes[0].data == 'true':
-        config.enter = True
-    else:
-        config.enter = False
+    cfg_element = root.find("config")
+    if cfg_element is not None:
+        enter = cfg_element.find("enter")
+        if enter is not None and enter.text is not None:
+            if enter.text.lower() == "true":
+                config.enter = True
+            else:
+                config.enter = False
 
 
 def get_branches():
@@ -113,6 +151,7 @@ def get_branches():
 
 
 def pull():
+    check_cur_project()
     print("Please make sure all your change is commit(y/n):")
     answer = input()
     if answer != 'y':
@@ -121,6 +160,7 @@ def pull():
 
 
 def push():
+    check_cur_project()
     print("Please make sure all your change is commit(y/n):")
     answer = input()
     if answer != 'y':
@@ -129,6 +169,7 @@ def push():
 
 
 def checkout():
+    check_cur_project()
     if len(sys.argv) < 3:
         print("Please specific a branch to checkout!")
         return
@@ -136,6 +177,7 @@ def checkout():
 
 
 def add():
+    check_cur_project()
     print("Are you sure you want to add all changed files to stage?(y/n)")
     answer = input()
     if answer != 'y':
@@ -144,10 +186,12 @@ def add():
 
 
 def branch():
+    check_cur_project()
     execute_cmd('git branch')
 
 
 def log():
+    check_cur_project()
     if len(sys.argv) < 3:
         print("Please specify a module with name!")
         return
@@ -160,7 +204,46 @@ def log():
 
 
 def status():
+    check_cur_project()
     execute_cmd('git status')
+
+
+def cfg():
+    get_tree()
+    if len(sys.argv) < 4:
+        print("Lack argument!")
+        sys.exit(ARGUMENT_ERROR)
+    # 设置当前使用的工程名称
+    if sys.argv[2] == "-project":
+        Tree.getroot().set("curProject", sys.argv[3])
+        Tree.write(configFilePath)
+        print("Switch to project:"+sys.argv[3])
+
+
+def clone():
+    global curProjectDir
+    check_cur_project()
+    print(curProjectDir)
+    if os.path.exists(curProjectDir):
+        print("Directory: %s already exists,do you want to clear it?(y/n):" % curProjectDir)
+        answer = input()
+        if answer != 'y':
+            return
+        shutil.rmtree(curProjectDir)
+    os.mkdir(curProjectDir)
+    for curMod in curModules:
+        os.chdir(curProjectDir)
+        os.system('git clone -b ' + curMod.init_branch + ' ' + curMod.git + '  ' + curMod.name)
+        if config.enter:
+            print("\nPress enter to continue,q to quit ")
+            ans = input()
+            if ans == 'q':
+                return
+
+
+# 打印当前工程所在路径
+def path():
+    print(curProjectDir)
 
 
 def cmd_dispatch():
@@ -169,35 +252,41 @@ def cmd_dispatch():
         print("You didn't specify any option!")
         return
     if sys.argv[1] == "status":
+        get_branches()
         status()
     elif sys.argv[1] == "pull":
+        get_branches()
         pull()
     elif sys.argv[1] == "push":
+        get_branches()
         pull()
     elif sys.argv[1] == "checkout":
+        get_branches()
         checkout()
     elif sys.argv[1] == "add":
+        get_branches()
         add()
     elif sys.argv[1] == "branch":
+        get_branches()
         branch()
     elif sys.argv[1] == "log":
+        get_branches()
         log()
+    elif sys.argv[1] == "config":
+        cfg()
+    elif sys.argv[1] == "clone":
+        clone()
+    elif sys.argv[1] == "path":
+        path()
     else:
         print("Wrong Argument!")
     return
 
 
 def main():
+    signal.signal(signal.SIGINT, handler)
     load_info()
-    get_branches()
     cmd_dispatch()
 
 main()
-
-
-
-
-
-
-
 

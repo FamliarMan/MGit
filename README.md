@@ -7,29 +7,89 @@
 4. push 能够将本地提交推送到远程分支，实际执行git push
 5. checkout [branch] 将所有模块切换到一个分支，实际执行git checkout
 6. branch 查看当前所有模块所在的分支名称,实际执行git branch
-
+7. log [module name] 该命令能够对指定的module执行git log命令
+8. clone 能够重新clone一个新的工程
+9. path 能够打印当前工程所在的目录
+10. config -project [project] 能从配置文件配置的多个工程中指定当前工作的工程
 
 ### 配置文件
 首先要在家目录下新建一个文件.mgit.xml,没有会报错。
 ```
-<setting curProject="tmp_app"> <!--配置当前project的名称-->
-	<project path ="/home/jianglei/tmp_app/"   
-		 name = "tmp_app">  <!--每一个project都要配置path路径和名称name，可以配置多个project，通过curProject指定当前使用的是什么-->
-		<!--这里直接配置每个模块的名称,不能错-->	
-		<module>2dfire_share</module>
-
-		<module>FireWaiterModule</module>
-
-		<module>GoodsModule</module>
-
-		<module>LoginModule</module>
-
-		<module>ManagerApp</module>
-
-		<module>ManagerBase</module>
+<setting curProject="develop">
+    <!--可以指定多个project，当前工作project靠curProject属性指定-->
+	<!--dev工程-->
+	<project name="develop" path="/home/jianglei/AndroidStudioProjects/develop/">
+		<module>
+            <!--模块名称-->
+            <name>2dfire_share</name>
+            <!--初始分支名称，主要用于clone时,之后将不再使用-->
+            <initBranch>restdev</initBranch>
+            <!--该模块对应的git地址-->
+            <git>git@git.2dfire-inc.com:background_manage_new/2dfire_share.git</git>
+		</module>
+        <module>
+            <name>FireWaiterModule</name>
+            <initBranch>restdev</initBranch>
+            <git>git@git.2dfire-inc.com:2ye-android/fire_waiter_android.git</git>
+        </module>
+        <module>
+            <name>GoodsModule</name>
+            <initBranch>develop</initBranch>
+            <git>git@git.2dfire-inc.com:background_manage_android/ManagerGoods.git</git>
+        </module>
+        <module>
+            <name>LoginModule</name>
+            <initBranch>develop</initBranch>
+            <git>git@git.2dfire-inc.com:tdf_module_android/TDFLoginModule.git</git>
+        </module>
+        <module>
+            <name>ManagerApp</name>
+            <initBranch>restdev</initBranch>
+            <git>git@git.2dfire-inc.com:background_manage_new/background-rest_phone.git</git>
+        </module>
+        <module>
+            <name>ManagerBase</name>
+            <initBranch>develop</initBranch>
+            <git>git@git.2dfire-inc.com:background_manage_android/ManagerBase.git</git>
+        </module>
 	</project>
+
+	<!--多菜单项目-->
+    <project name="multi_menu" path="/home/jianglei/AndroidStudioProjects/multi_menu/">
+        <module>
+            <name>2dfire_share</name>
+            <initBranch>restdev</initBranch>
+            <git>git@git.2dfire-inc.com:background_manage_new/2dfire_share.git</git>
+        </module>
+        <module>
+            <name>FireWaiterModule</name>
+            <initBranch>restdev</initBranch>
+            <git>git@git.2dfire-inc.com:2ye-android/fire_waiter_android.git</git>
+        </module>
+        <module>
+            <name>GoodsModule</name>
+            <initBranch>develop</initBranch>
+            <git>git@git.2dfire-inc.com:background_manage_android/ManagerGoods.git</git>
+        </module>
+        <module>
+            <name>LoginModule</name>
+            <initBranch>develop</initBranch>
+            <git>git@git.2dfire-inc.com:tdf_module_android/TDFLoginModule.git</git>
+        </module>
+        <module>
+            <name>ManagerApp</name>
+            <initBranch>restdev</initBranch>
+            <git>git@git.2dfire-inc.com:background_manage_new/background-rest_phone.git</git>
+        </module>
+        <module>
+            <name>ManagerBase</name>
+            <initBranch>develop</initBranch>
+            <git>git@git.2dfire-inc.com:background_manage_android/ManagerBase.git</git>
+        </module>
+    </project>
+
 	<config>
-		<!--每个模块执行完命令是否按回车后再执行-->
+		<!--该属性为true，则每个模块执行玩命令后需回车确认才会继续执行下一个模块的命令，否则自动全部执行，推荐为true-->
    	 <enter>true</enter>
 	</config>
 </setting>
