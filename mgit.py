@@ -92,7 +92,7 @@ def execute_cmd(cmd):
         print()
         global config
         if config.enter:
-            print("\nPress Enter To Continue")
+            print("\nPress Enter To Continue(%s)" % curMod.name)
             input()
     return
 
@@ -249,6 +249,30 @@ def path():
     print(curProjectDir)
 
 
+# 遍历每一个模块然后进行相应的操作
+def each():
+    for curMod in curModules:
+        print("---------%s-----------" % curMod.path)
+        os.chdir(curMod.path)
+        os.system('git status')
+        print("\n(q for quit,n  or enter for next or others for command to execute)")
+        print(":", end='')
+        cmd = input()
+        while cmd != 'q' and cmd != 'n' and cmd != '':
+            print("---------%s-----------" % curMod.path)
+            os.system(cmd)
+            print("\n(q for quit,n or enter for next or others for command to execute)")
+            print(":", end='')
+            cmd = input()
+        if cmd == 'q':
+            sys.exit(0)
+        # 继续执行下一个模块的操作
+        elif cmd == 'n':
+            continue
+        else:
+            continue
+
+
 def cmd_dispatch():
     global curModules
     if len(sys.argv) == 1:
@@ -281,6 +305,8 @@ def cmd_dispatch():
         clone()
     elif sys.argv[1] == "path":
         path()
+    elif sys.argv[1] == "each":
+        each()
     else:
         print("Wrong Argument!")
     return
