@@ -19,6 +19,30 @@ namePath = {}
 Tree = None
 
 
+def prRed(prt): print("\033[91m {}\033[00m" .format(prt))
+
+
+def prGreen(prt): print("\033[92m {}\033[00m" .format(prt))
+
+
+def prYellow(prt): print("\033[93m {}\033[00m" .format(prt))
+
+
+def prLightPurple(prt): print("\033[94m {}\033[00m" .format(prt))
+
+
+def prPurple(prt): print("\033[95m {}\033[00m" .format(prt))
+
+
+def prCyan(prt): print("\033[96m {}\033[00m" .format(prt))
+
+
+def prLightGray(prt): print("\033[97m {}\033[00m" .format(prt))
+
+
+def prBlack(prt): print("\033[98m {}\033[00m" .format(prt))
+
+
 # 按下ctrl+c时触发
 def handler(signal_num,frame):
     sys.exit(signal_num)
@@ -86,13 +110,13 @@ def get_all_module(project):
 # 为每个模块执行命令
 def execute_cmd(cmd):
     for curMod in curModules:
-        print("---------%s-----------" % curMod.path)
+        prYellow("---------%s-----------" % curMod.path)
         os.chdir(curMod.path)
         os.system(cmd)
         print()
         global config
         if config.enter:
-            print("\nPress Enter To Continue(%s)" % curMod.name)
+            prYellow("\nPress Enter To Continue(%s)" % curMod.name)
             input()
     return
 
@@ -252,16 +276,16 @@ def path():
 # 遍历每一个模块然后进行相应的操作
 def each():
     for curMod in curModules:
-        print("---------%s-----------" % curMod.path)
+        prYellow("---------%s-----------" % curMod.path)
         os.chdir(curMod.path)
         os.system('git status')
-        print("\n(q for quit,n  or enter for next or others for command to execute)")
+        prYellow("\n(q for quit,n  or enter for next or others for command to execute)")
         print(":", end='')
         cmd = input()
         while cmd != 'q' and cmd != 'n' and cmd != '':
             print("---------%s-----------" % curMod.path)
             os.system(cmd)
-            print("\n(q for quit,n or enter for next or others for command to execute)")
+            prYellow("\n(q for quit,n or enter for next or others for command to execute)")
             print(":", end='')
             cmd = input()
         if cmd == 'q':
