@@ -242,9 +242,21 @@ def cfg():
         sys.exit(ARGUMENT_ERROR)
     # 设置当前使用的工程名称
     if sys.argv[2] == "-project":
+
+        all_projects = Tree.getroot().findall("project")
+        # 查找当前使用的是那个project
+        has_project = False
+        for project in all_projects:
+            if project.get("name") == sys.argv[3]:
+                has_project = True
+        if not has_project:
+            prRed("Wrong project name")
+            sys.exit(XML_CONFIG_ERROR)
         Tree.getroot().set("curProject", sys.argv[3])
         Tree.write(configFilePath)
         print("Switch to project:"+sys.argv[3])
+    else:
+        print("Wrong Argument!")
 
 
 def clone():
