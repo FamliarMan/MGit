@@ -291,7 +291,7 @@ def each():
         prYellow("---------%s-----------" % curMod.path)
         os.chdir(curMod.path)
         os.system('git status')
-        prYellow("\n(q for quit,n  or enter for next or others for command to execute)")
+        prYellow("\n( "+curMod.name+" :q for quit,n  or enter for next or others for command to execute)")
         print(":", end='')
         cmd = input()
         while cmd != 'q' and cmd != 'n' and cmd != '':
@@ -309,6 +309,17 @@ def each():
             continue
 
 
+def repeat():
+    if len(sys.argv) < 3:
+        prRed("Please specify a command to execute!")
+        sys.exit(ARGUMENT_ERROR)
+    cmd = ""
+    for arg in sys.argv[2:]:
+        cmd += arg
+        cmd += " "
+    execute_cmd(cmd)
+
+
 def cmd_dispatch():
     global curModules
     if len(sys.argv) == 1:
@@ -322,7 +333,7 @@ def cmd_dispatch():
         pull()
     elif sys.argv[1] == "push":
         get_branches()
-        pull()
+        push()
     elif sys.argv[1] == "checkout":
         get_branches()
         checkout()
@@ -343,6 +354,8 @@ def cmd_dispatch():
         path()
     elif sys.argv[1] == "each":
         each()
+    elif sys.argv[1] == "repeat":
+        repeat()
     else:
         print("Wrong Argument!")
     return
