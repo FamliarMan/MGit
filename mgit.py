@@ -109,15 +109,29 @@ def get_all_module(project):
 
 # 为每个模块执行命令
 def execute_cmd(cmd):
-    for curMod in curModules:
+    is_skip = False
+    next_module = None
+    for index in range (len(curModules)):
+        curMod = curModules[index]
+        if index < len(curModules) - 1:
+            next_module = curModules[index+1]
+        if is_skip:
+            is_skip = False
+            continue
         prYellow("---------%s-----------" % curMod.path)
         os.chdir(curMod.path)
         os.system(cmd)
         print()
         global config
         if config.enter:
-            prYellow("\nPress Enter To Continue(%s)" % curMod.name)
-            input()
+            prYellow("\n(%s--->%s)Press enter to continue,s to skip next module,n to stop" % (curMod.name,next_module.name))
+            ans = input()
+            if ans == "s":
+                is_skip = True
+            elif ans == "n":
+                sys.exit()
+            else:
+                is_skip = False
     return
 
 
