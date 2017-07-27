@@ -56,6 +56,7 @@ class Module:
     path = None
     branch = None
     init_branch = None
+    work_branch = None
     git = None
     name = None
     xml_element = None
@@ -99,6 +100,7 @@ def get_all_module(project):
         mod_config = Module()
         mod_config.name = mod.find("name").text
         mod_config.init_branch = mod.find("initBranch").text
+        mod_config.work_branch = mod.find("workBranch").text
         mod_config.git = mod.find("git").text
         mod_config.path = curProjectDir + mod_config.name
         mod_config.xml_element = mod
@@ -108,10 +110,11 @@ def get_all_module(project):
 
 
 # 为每个模块执行命令
-def execute_cmd(cmd):
+def execute_cmd(cmd, is_skip_no_dir=True):
+    global curProjectDir
     is_skip = False
     next_module = None
-    for index in range (len(curModules)):
+    for index in range(len(curModules)):
         curMod = curModules[index]
         if index < len(curModules) - 1:
             next_module = curModules[index+1]
@@ -119,12 +122,36 @@ def execute_cmd(cmd):
             is_skip = False
             continue
         prYellow("---------%s-----------" % curMod.path)
-        os.chdir(curMod.path)
-        os.system(cmd)
-        print()
+        # 对应的目录存在，则进入到该目录中去执行
+        if os.path.exists(curMod.path):
+            os.chdir(curMod.path)
+            # 如果传入的是命令列表，则取出每个模块对应的命令
+            if isinstance(cmd, list):
+                cur_cmd = cmd[index]
+            # 如果传入的命令是单条命令，则直接执行
+            else:
+                cur_cmd = cmd
+            os.system(cur_cmd)
+            print()
+        # 对应目录不存在
+        else:
+            # 跳过该命令
+            if is_skip_no_dir:
+                prLightPurple("This module does't exist!")
+            # 在根目录执行该命令
+            else:
+                os.chdir(curProjectDir)
+                # 如果传入的是命令列表，则取出每个模块对应的命令
+                if isinstance(cmd, list):
+                    cur_cmd = cmd[index]
+                # 如果传入的命令是单条命令，则直接执行
+                else:
+                    cur_cmd = cmd
+                os.system(cur_cmd)
+                print()
         global config
         if config.enter:
-            prYellow("\n(%s--->%s)Press enter to continue,s to skip next module,n to stop" % (curMod.name,next_module.name))
+            prYellow("\n(%s--->%s)Press enter to continue,s to skip next module,n to stop" % (curMod.name, next_module.name))
             ans = input()
             if ans == "s":
                 is_skip = True
@@ -182,6 +209,8 @@ def load_info():
 
 def get_branches():
     for curMod in curModules:
+        if not os.path.exists(curMod.path):
+            continue
         os.chdir(curMod.path)
         r = os.popen('git branch')
         lines = r.read().splitlines(False)
@@ -284,14 +313,17 @@ def clone():
             return
         shutil.rmtree(curProjectDir)
     os.mkdir(curProjectDir)
+    cmds = []
     for curMod in curModules:
-        os.chdir(curProjectDir)
-        os.system('git clone -b ' + curMod.init_branch + ' ' + curMod.git + '  ' + curMod.name)
-        if config.enter:
-            print("\nPress enter to continue,q to quit ")
-            ans = input()
-            if ans == 'q':
-                return
+        cmd = 'git clone -b ' + curMod.init_branch + ' ' + curMod.git + '  ' + curMod.name
+        cmds.append(cmd)
+        # os.system('git clone -b ' + curMod.init_branch + ' ' + curMod.git + '  ' + curMod.name)
+        # if config.enter:
+        #     print("\nPress enter to continue,q to quit ")
+        #     ans = input()
+        #     if ans == 'q':
+        #         return
+    execute_cmd(cmds, False)
 
 
 # 打印当前工程所在路径
@@ -303,6 +335,8 @@ def path():
 def each():
     for curMod in curModules:
         prYellow("---------%s-----------" % curMod.path)
+        if not os.path.exists(curMod.path):
+            continue
         os.chdir(curMod.path)
         os.system('git status')
         prYellow("\n( "+curMod.name+" :q for quit,n  or enter for next or others for command to execute)")
@@ -332,6 +366,24 @@ def repeat():
         cmd += arg
         cmd += " "
     execute_cmd(cmd)
+
+
+# 检出该项目的初始分支或工作分支
+def checkout_init_or_work_branch(is_init_branch = True):
+    prRed("Please make sure you commit all your files(y/n):")
+    ans = input()
+    if ans == 'n':
+        return
+    cmds = []
+    global curModules
+    for index in range(len(curModules)):
+        mod = curModules[index]
+        if is_init_branch:
+            cmd = "git checkout " + mod.init_branch
+        else:
+            cmd = "git checkout " + mod.work_branch
+        cmds.append(cmd)
+    execute_cmd(cmds)
 
 
 def cmd_dispatch():
@@ -370,8 +422,14 @@ def cmd_dispatch():
         each()
     elif sys.argv[1] == "repeat":
         repeat()
+    elif sys.argv[1] == "wb":
+        checkout_init_or_work_branch(False)
+    elif sys.argv[1] == "ib":
+        checkout_init_or_work_branch(True)
+
     else:
         print("Wrong Argument!")
+
     return
 
 
