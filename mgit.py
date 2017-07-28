@@ -102,7 +102,7 @@ def get_all_module(project):
         mod_config.init_branch = mod.find("initBranch").text
         mod_config.work_branch = mod.find("workBranch").text
         mod_config.git = mod.find("git").text
-        mod_config.path = curProjectDir + mod_config.name
+        mod_config.path = curProjectDir +"/"+ mod_config.name
         mod_config.xml_element = mod
         namePath[mod_config.name] = mod_config.path
         res.append(mod_config)
@@ -193,8 +193,12 @@ def load_info():
             curProjectDir = project.get("path")
             curModules = get_all_module(project)
     if not os.path.exists(curProjectDir):
-        print("Wrong path in project!")
-        sys.exit(XML_CONFIG_ERROR)
+        print("Wrong path in project,do you want to make it(%s)?(y/n):" % curProjectDir)
+        ans = input()
+        if ans != "y":
+            sys.exit(XML_CONFIG_ERROR)
+        else:
+            os.mkdir(curProjectDir)
     # 加载配置信息
     global config
     cfg_element = root.find("config")
@@ -306,13 +310,13 @@ def clone():
     global curProjectDir
     check_cur_project()
     print(curProjectDir)
-    if os.path.exists(curProjectDir):
-        print("Directory: %s already exists,do you want to clear it?(y/n):" % curProjectDir)
+    if len(os.listdir(curProjectDir)) != 0:
+        print("Directory: %s isnt't empty,do you want to clear it?(y/n):" % curProjectDir)
         answer = input()
         if answer != 'y':
             return
         shutil.rmtree(curProjectDir)
-    os.mkdir(curProjectDir)
+        os.mkdir(curProjectDir)
     cmds = []
     for curMod in curModules:
         cmd = 'git clone -b ' + curMod.init_branch + ' ' + curMod.git + '  ' + curMod.name
