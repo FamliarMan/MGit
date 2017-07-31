@@ -5,6 +5,7 @@ import sys
 import time
 import shutil
 import signal
+import getopt
 from xml.etree import ElementTree as ET
 from os.path import expanduser
 
@@ -19,32 +20,32 @@ namePath = {}
 Tree = None
 
 
-def prRed(prt): print("\033[91m {}\033[00m" .format(prt))
+def prRed(prt): print("\033[91m {}\033[00m".format(prt))
 
 
-def prGreen(prt): print("\033[92m {}\033[00m" .format(prt))
+def prGreen(prt): print("\033[92m {}\033[00m".format(prt))
 
 
-def prYellow(prt): print("\033[93m {}\033[00m" .format(prt))
+def prYellow(prt): print("\033[93m {}\033[00m".format(prt))
 
 
-def prLightPurple(prt): print("\033[94m {}\033[00m" .format(prt))
+def prLightPurple(prt): print("\033[94m {}\033[00m".format(prt))
 
 
-def prPurple(prt): print("\033[95m {}\033[00m" .format(prt))
+def prPurple(prt): print("\033[95m {}\033[00m".format(prt))
 
 
-def prCyan(prt): print("\033[96m {}\033[00m" .format(prt))
+def prCyan(prt): print("\033[96m {}\033[00m".format(prt))
 
 
-def prLightGray(prt): print("\033[97m {}\033[00m" .format(prt))
+def prLightGray(prt): print("\033[97m {}\033[00m".format(prt))
 
 
-def prBlack(prt): print("\033[98m {}\033[00m" .format(prt))
+def prBlack(prt): print("\033[98m {}\033[00m".format(prt))
 
 
 # 按下ctrl+c时触发
-def handler(signal_num,frame):
+def handler(signal_num, frame):
     sys.exit(signal_num)
 
 
@@ -63,9 +64,9 @@ class Module:
 
     def string(self):
         print("Name：" + self.name)
-        print("Branch:"+self.branch)
-        print("git:"+self.git)
-        print("path:"+self.path)
+        print("Branch:" + self.branch)
+        print("git:" + self.git)
+        print("path:" + self.path)
         print()
 
 
@@ -102,7 +103,7 @@ def get_all_module(project):
         mod_config.init_branch = mod.find("initBranch").text
         mod_config.work_branch = mod.find("workBranch").text
         mod_config.git = mod.find("git").text
-        mod_config.path = curProjectDir +"/"+ mod_config.name
+        mod_config.path = curProjectDir + "/" + mod_config.name
         mod_config.xml_element = mod
         namePath[mod_config.name] = mod_config.path
         res.append(mod_config)
@@ -115,7 +116,7 @@ def execute_cmd(cmd, is_skip_no_dir=True):
     global config
     for index in range(len(curModules)):
         curMod = curModules[index]
-        if  config.enter:
+        if config.enter:
             prRed("\nNext is module[%s],s to skip,n to stop,enter to continue:" % curMod.name)
             ans = input()
             if ans == 's':
@@ -233,12 +234,12 @@ def push():
     execute_cmd('git push')
 
 
-def checkout():
+def checkout(new_branch):
     check_cur_project()
     if len(sys.argv) < 3:
         print("Please specific a branch to checkout!")
         return
-    execute_cmd('git checkout '+sys.argv[2])
+    execute_cmd('git checkout ' + new_branch)
 
 
 def add():
@@ -273,28 +274,21 @@ def status():
     execute_cmd('git status')
 
 
-def cfg():
+def switch_project(new_project):
     get_tree()
-    if len(sys.argv) < 4:
-        print("Lack argument!")
-        sys.exit(ARGUMENT_ERROR)
     # 设置当前使用的工程名称
-    if sys.argv[2] == "-project":
-
-        all_projects = Tree.getroot().findall("project")
-        # 查找当前使用的是那个project
-        has_project = False
-        for project in all_projects:
-            if project.get("name") == sys.argv[3]:
-                has_project = True
-        if not has_project:
-            prRed("Wrong project name")
-            sys.exit(XML_CONFIG_ERROR)
-        Tree.getroot().set("curProject", sys.argv[3])
-        Tree.write(configFilePath)
-        print("Switch to project:"+sys.argv[3])
-    else:
-        print("Wrong Argument!")
+    all_projects = Tree.getroot().findall("project")
+    # 查找当前使用的是那个project
+    has_project = False
+    for project in all_projects:
+        if project.get("name") == new_project:
+            has_project = True
+    if not has_project:
+        prRed("Wrong project name")
+        sys.exit(XML_CONFIG_ERROR)
+    Tree.getroot().set("curProject", new_project)
+    Tree.write(configFilePath)
+    print("Switch to project: " + new_project)
 
 
 def clone():
@@ -334,7 +328,7 @@ def each():
             continue
         os.chdir(curMod.path)
         os.system('git status')
-        prYellow("\n( "+curMod.name+" :q for quit,n  or enter for next or others for command to execute)")
+        prYellow("\n( " + curMod.name + " :q for quit,n  or enter for next or others for command to execute)")
         print(":", end='')
         cmd = input()
         while cmd != 'q' and cmd != 'n' and cmd != '':
@@ -364,7 +358,7 @@ def repeat():
 
 
 # 检出该项目的初始分支或工作分支
-def checkout_init_or_work_branch(is_init_branch = True):
+def checkout_init_or_work_branch(is_init_branch=True):
     prRed("Please make sure you commit all your files(y/n):")
     ans = input()
     if ans == 'n':
@@ -381,51 +375,91 @@ def checkout_init_or_work_branch(is_init_branch = True):
     execute_cmd(cmds)
 
 
+def help():
+    txt = \
+        """
+        -h or --help:                  Print the help content.
+        -t or --target [project name]: switch the working project.
+        -f or --force:                 Force to execute command for every module automatically. 
+        ---------------------------------------------------------------------------------------
+        add                 Add files of all the module to the index,just like 'git add'.
+        status              Show the working tree status of every module,just like 'git status'.
+        pull                Fetch from and integrate with another repository or a local branch
+                                for every module,just like 'git pull'.
+        push                Update remote refs along with associated objects for every module, 
+                                just like 'git push'.
+        checkout [branch]   Switch the branches of all the modules to a new branch.
+        branch              Print all the branches of every module.
+        log [module]        Print the log of the specific module.
+        clone               Clone a new project to local,you should config it in the .mgit.xml first.
+        path                Print the directory of current working project.
+        each                Execute commands in interaction mode.
+        wb                  Switch the branches of all the modules to the work branch configured 
+                                in the .mgit.xml
+        ib                  Switch the branches of all the modules to the init branch configured 
+                                in the .mgit.xml
+        repeat [command]    Execute the customer command for every module.
+        """
+    print(txt)
+
+
 def cmd_dispatch():
     global curModules
-    if len(sys.argv) == 1:
-        print("You didn't specify any option!")
-        return
-    if sys.argv[1] == "status":
-        get_branches()
-        status()
-    elif sys.argv[1] == "pull":
-        get_branches()
-        pull()
-    elif sys.argv[1] == "push":
-        get_branches()
-        push()
-    elif sys.argv[1] == "checkout":
-        get_branches()
-        checkout()
-    elif sys.argv[1] == "add":
-        get_branches()
-        add()
-    elif sys.argv[1] == "branch":
-        get_branches()
-        branch()
-    elif sys.argv[1] == "log":
-        get_branches()
-        log()
-    elif sys.argv[1] == "config":
-        cfg()
-    elif sys.argv[1] == "clone":
-        clone()
-    elif sys.argv[1] == "path":
-        path()
-    elif sys.argv[1] == "each":
-        each()
-    elif sys.argv[1] == "repeat":
-        repeat()
-    elif sys.argv[1] == "wb":
-        checkout_init_or_work_branch(False)
-    elif sys.argv[1] == "ib":
-        checkout_init_or_work_branch(True)
-
-    else:
-        print("Wrong Argument!")
-
-    return
+    try:
+        options, args = getopt.getopt(sys.argv[1:], "hft:", ["help", "target="])
+        for name, value in options:
+            if name in ("-h", "--help"):
+                # help
+                help()
+                break
+            elif name in ("-t", "--target"):
+                switch_project(value)
+                break
+            elif name in ("-f", "--force"):
+                config.enter = False
+                break
+        for i in range(len(args)):
+            cmd = args[i]
+            if cmd == "status":
+                get_branches()
+                status()
+            elif cmd == "pull":
+                get_branches()
+                pull()
+            elif cmd == "push":
+                get_branches()
+                push()
+            elif cmd == "checkout":
+                if i + 1 >= len(args):
+                    raise getopt.GetoptError('Wrong argument')
+                new_branch = args[i + 1]
+                get_branches()
+                checkout(new_branch)
+            elif cmd == "add":
+                get_branches()
+                add()
+            elif cmd == "branch":
+                get_branches()
+                branch()
+            elif cmd == "log":
+                get_branches()
+                log()
+            elif cmd == "clone":
+                clone()
+            elif cmd == "path":
+                path()
+            elif cmd == "each":
+                each()
+            elif cmd == "repeat":
+                repeat()
+            elif cmd == "wb":
+                checkout_init_or_work_branch(False)
+            elif cmd == "ib":
+                checkout_init_or_work_branch(True)
+            else:
+                prRed("Wrong argument,please refer to '-h or --help'")
+    except getopt.GetoptError:
+        prRed("Wrong argument,please refer to '-h or --help'")
 
 
 def main():
@@ -433,5 +467,5 @@ def main():
     load_info()
     cmd_dispatch()
 
-main()
 
+main()

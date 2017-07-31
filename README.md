@@ -11,11 +11,15 @@
 7. log [module name] 该命令能够对指定的module执行git log命令
 8. clone 能够重新clone一个新的工程
 9. path 能够打印当前工程所在的目录
-10. config -project [project] 能从配置文件配置的多个工程中指定当前工作的工程
-11. each 能够以交互式方式对每一个模块输入命令
-12. wb  work branch 缩写，能快速切换到正在工作的分支
-13. ib init branch 缩写，能快速切换到所有初始分支
-14. repeat [cmd] 可以对所有模块执行该cmd命令
+10. each 能够以交互式方式对每一个模块输入命令
+11. wb  work branch 缩写，能快速切换到正在工作的分支
+12. ib init branch 缩写，能快速切换到所有初始分支
+13. repeat [cmd] 可以对所有模块执行该cmd命令
+
+### 特殊参数
+> -t  [工程名称] 切换当前工作的工程
+  -f 忽略配置文件中的“enter“配置项，强制一次性对所有模块执行命令
+  
 
 ### 配置文件
 首先要在家目录下新建一个文件.mgit.xml,没有会报错。
@@ -61,6 +65,7 @@
             <workBranch>feature/mutil_menu</workBranch>
             <git>git@git.2dfire-inc.com:background_manage_android/ManagerBase.git</git>
         </module>
+	......
     </project>
 
 	<config>
