@@ -346,14 +346,8 @@ def each():
             continue
 
 
-def repeat():
-    if len(sys.argv) < 3:
-        prRed("Please specify a command to execute!")
-        sys.exit(ARGUMENT_ERROR)
-    cmd = ""
-    for arg in sys.argv[2:]:
-        cmd += arg
-        cmd += " "
+def customer_cmd(cmd):
+    print(cmd)
     execute_cmd(cmd)
 
 
@@ -381,6 +375,7 @@ def help():
         -h or --help:                  Print the help content.
         -t or --target [project name]: switch the working project.
         -f or --force:                 Force to execute command for every module automatically. 
+        -c or --command:[custom cmd]:  Execute the customer git commands for all modules,for example: -c git status.
         ---------------------------------------------------------------------------------------
         add                 Add files of all the module to the index,just like 'git add'.
         status              Show the working tree status of every module,just like 'git status'.
@@ -398,7 +393,6 @@ def help():
                                 in the .mgit.xml
         ib                  Switch the branches of all the modules to the init branch configured 
                                 in the .mgit.xml
-        repeat [command]    Execute the customer command for every module.
         """
     print(txt)
 
@@ -406,7 +400,7 @@ def help():
 def cmd_dispatch():
     global curModules
     try:
-        options, args = getopt.getopt(sys.argv[1:], "hft:", ["help", "target="])
+        options, args = getopt.getopt(sys.argv[1:], "hft:c", ["help", "target=", "command"])
         for name, value in options:
             if name in ("-h", "--help"):
                 # help
@@ -417,45 +411,60 @@ def cmd_dispatch():
                 break
             elif name in ("-f", "--force"):
                 config.enter = False
-                break
+            elif name in ("-c", "--command"):
+                customer_command = ""
+                for i in args:
+                    customer_command += (i+" ")
+                customer_cmd(customer_command)
+                return
         for i in range(len(args)):
             cmd = args[i]
             if cmd == "status":
                 get_branches()
                 status()
+                break
             elif cmd == "pull":
                 get_branches()
                 pull()
+                break
             elif cmd == "push":
                 get_branches()
                 push()
+                break
             elif cmd == "checkout":
                 if i + 1 >= len(args):
                     raise getopt.GetoptError('Wrong argument')
                 new_branch = args[i + 1]
                 get_branches()
                 checkout(new_branch)
+                break
             elif cmd == "add":
                 get_branches()
                 add()
+                break
             elif cmd == "branch":
                 get_branches()
                 branch()
+                break
             elif cmd == "log":
                 get_branches()
                 log()
+                break
             elif cmd == "clone":
                 clone()
+                break
             elif cmd == "path":
                 path()
+                break
             elif cmd == "each":
                 each()
-            elif cmd == "repeat":
-                repeat()
+                break
             elif cmd == "wb":
                 checkout_init_or_work_branch(False)
+                break
             elif cmd == "ib":
                 checkout_init_or_work_branch(True)
+                break
             else:
                 prRed("Wrong argument,please refer to '-h or --help'")
     except getopt.GetoptError:
