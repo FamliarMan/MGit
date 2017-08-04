@@ -8,13 +8,12 @@
 4. push 能够将本地提交推送到远程分支，实际执行git push
 5. checkout [branch] 将所有模块切换到一个分支，实际执行git checkout
 6. branch 查看当前所有模块所在的分支名称,实际执行git branch
-7. log [module name] 该命令能够对指定的module执行git log命令
+7. log [module name] 该命令能够对指定的module执行git log命令,如果module name为空则对所有module执行该命令。
 8. clone 能够重新clone一个新的工程
 9. path 能够打印当前工程所在的目录
 10. each 能够以交互式方式对每一个模块输入命令
 11. wb  work branch 缩写，能快速切换到正在工作的分支
 12. ib init branch 缩写，能快速切换到所有初始分支
-13. repeat [cmd] 可以对所有模块执行该cmd命令
 
 ### 特殊参数
 > -t  [工程名称] 切换当前工作的工程

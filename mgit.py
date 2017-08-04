@@ -256,17 +256,17 @@ def branch():
     execute_cmd('git branch')
 
 
-def log():
+def log(module_name):
     check_cur_project()
-    if len(sys.argv) < 3:
-        print("Please specify a module with name!")
-        return
-    if sys.argv[2] not in namePath:
+    if module_name is None:
+        execute_cmd('git log')
+    elif module_name not in namePath:
         print("The module name is wrong!")
         return
-    path = namePath[sys.argv[2]]
-    os.chdir(path)
-    os.system('git log')
+    else:
+        module_path = namePath[module_name]
+        os.chdir(module_path)
+        os.system('git log')
 
 
 def status():
@@ -385,7 +385,8 @@ def help():
                                 just like 'git push'.
         checkout [branch]   Switch the branches of all the modules to a new branch.
         branch              Print all the branches of every module.
-        log [module]        Print the log of the specific module.
+        log [module]        Print the log of the specific module,and if module is empty,execute 'git log' 
+                                for every module.
         clone               Clone a new project to local,you should config it in the .mgit.xml first.
         path                Print the directory of current working project.
         each                Execute commands in interaction mode.
@@ -414,7 +415,7 @@ def cmd_dispatch():
             elif name in ("-c", "--command"):
                 customer_command = ""
                 for i in args:
-                    customer_command += (i+" ")
+                    customer_command += (i + " ")
                 customer_cmd(customer_command)
                 return
         for i in range(len(args)):
@@ -448,7 +449,10 @@ def cmd_dispatch():
                 break
             elif cmd == "log":
                 get_branches()
-                log()
+                if i + 1 >= len(args):
+                    log(None)
+                else:
+                    log(args[i + 1])
                 break
             elif cmd == "clone":
                 clone()
