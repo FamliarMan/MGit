@@ -374,7 +374,7 @@ def help():
         """
         -h or --help:                  Print the help content.
         -t or --target [project name]: switch the working project.
-        -f or --force:                 Force to execute command for every module automatically. 
+        -f or --force:                 Force to overwrite the 'enter' tag in xml file,and always opposite. 
         -c or --command:[custom cmd]:  Execute the customer git commands for all modules,for example: -c git status.
         ---------------------------------------------------------------------------------------
         add                 Add files of all the module to the index,just like 'git add'.
@@ -411,7 +411,7 @@ def cmd_dispatch():
                 switch_project(value)
                 break
             elif name in ("-f", "--force"):
-                config.enter = False
+                config.enter = not config.enter
             elif name in ("-c", "--command"):
                 customer_command = ""
                 for i in args:
