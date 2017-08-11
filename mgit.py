@@ -341,8 +341,10 @@ def each():
             sys.exit(0)
         # 继续执行下一个模块的操作
         elif cmd == 'n':
+            print("\n\n")
             continue
         else:
+            print("\n\n")
             continue
 
 
