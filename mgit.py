@@ -371,6 +371,30 @@ def checkout_init_or_work_branch(is_init_branch=True):
     execute_cmd(cmds)
 
 
+# 添加一个新模块
+def add_module(module_name):
+    global curProjectDir
+    for mod in curModules:
+        if module_name == mod.name:
+            os.chdir(curProjectDir)
+            cmd = 'git clone -b ' + mod.init_branch + ' ' + mod.git + '  ' + mod.name
+            os.system(cmd)
+            return
+    prRed("Wrong module name")
+
+
+# 大致列出当前分支信息
+def list():
+    global curModules
+    for mod in curModules:
+        prYellow("-------------------------------------------------------")
+        print("name:         " + mod.name)
+        print("work branch:  " + mod.work_branch)
+        print("init branch:  " + mod.init_branch)
+        print("git:          " + mod.git)
+        print("\n")
+
+
 def help():
     txt = \
         """
@@ -393,9 +417,11 @@ def help():
         path                Print the directory of current working project.
         each                Execute commands in interaction mode.
         wb                  Switch the branches of all the modules to the work branch configured 
-                                in the .mgit.xml
+                                in the .mgit.xml.
         ib                  Switch the branches of all the modules to the init branch configured 
-                                in the .mgit.xml
+                                in the .mgit.xml.
+        am [new module]     Add a new module to project,you should config the module in .mgit.xml first.
+        list                List the information of every module.
         """
     print(txt)
 
@@ -470,6 +496,15 @@ def cmd_dispatch():
                 break
             elif cmd == "ib":
                 checkout_init_or_work_branch(True)
+                break
+            elif cmd == "am":
+                if i + 1 >= len(args):
+                    prRed("Wrong argument,please specify a module name you want to add")
+                else:
+                    add_module(args[i + 1])
+                break
+            elif cmd == "list":
+                list()
                 break
             else:
                 prRed("Wrong argument,please refer to '-h or --help'")
