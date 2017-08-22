@@ -16,6 +16,7 @@ ARGUMENT_ERROR = 3
 curProjectDir = None
 configFilePath = None
 curModules = []
+curProjects = []
 namePath = {}
 Tree = None
 
@@ -51,6 +52,11 @@ def handler(signal_num, frame):
 
 class Config:
     enter = True
+
+
+class Project:
+    name = ""
+    path = ""
 
 
 class Module:
@@ -157,12 +163,20 @@ def execute_cmd(cmd, is_skip_no_dir=True):
 def get_tree():
     global Tree
     global configFilePath
-    configFilePath = os.path.join(expanduser("~"), ".mgit.xml")
+    configFilePath = os.path.abspath(".")+"/.mgit.xml"
+    # 全局配置文件
+    globalFilePath = os.path.join(expanduser("~"), ".mgit.xml")
+    if not os.path.exists(configFilePath):
+        if not os.path.exists(globalFilePath):
+            prRed("Can't find .mgit.xml file in your home directory nor project directory!")
+            sys.exit(FILE_NOT_EXIST)
+        else:
+            configFilePath = globalFilePath
     try:
         Tree = ET.parse(configFilePath)
-    except IOError:
-        print("Missing .mgit.xml file in your home directory!")
-        sys.exit(FILE_NOT_EXIST)
+    except xml.etree.ElementTree.ParseError:
+        prRed("You should configure your .mgit.xml right!\n"+"path:"+configFilePath)
+        sys.exit(XML_CONFIG_ERROR)
 
 
 # 从xml中解析信息
@@ -181,6 +195,11 @@ def load_info():
     # 查找当前使用的是那个project
     for project in all_projects:
         check_project(project)
+        # 顺便记录下各个项目的信息
+        p = Project()
+        p.name = project.get("name")
+        p.path = project.get("path")
+        curProjects.append(p)
         if project.get("name") == cur_project_name:
             curProjectDir = project.get("path")
             curModules = get_all_module(project)
@@ -384,7 +403,7 @@ def add_module(module_name):
 
 
 # 大致列出当前分支信息
-def list():
+def list_info():
     global curModules
     for mod in curModules:
         prYellow("-------------------------------------------------------")
@@ -393,6 +412,13 @@ def list():
         print("init branch:  " + mod.init_branch)
         print("git:          " + mod.git)
         print("\n")
+
+
+def list_project():
+    for p in curProjects:
+        prYellow("-----------------------------------------")
+        prRed(p.name)
+        print(p.path)
 
 
 def help():
@@ -422,6 +448,7 @@ def help():
                                 in the .mgit.xml.
         am [new module]     Add a new module to project,you should config the module in .mgit.xml first.
         list                List the information of every module.
+        project             List all the projects configured in the .mgit.xml
         """
     print(txt)
 
@@ -504,7 +531,10 @@ def cmd_dispatch():
                     add_module(args[i + 1])
                 break
             elif cmd == "list":
-                list()
+                list_info()
+                break
+            elif cmd == "project":
+                list_project()
                 break
             else:
                 prRed("Wrong argument,please refer to '-h or --help'")
