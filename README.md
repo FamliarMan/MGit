@@ -20,7 +20,7 @@
 对所有module生效。
 16. cwb [branch_name] [module_name] 修改配置文件中的workBranch节点，如果指定了module_name就只对该module生效，否则
 对所有module生效。
-17. merge [status] 如果status为true或者未指定，则会将initwork分支合并到work分支，如果为false，则想法
+17. merge [status] 如果status为true或者未指定，则会将init分支合并到work分支，如果为false，则相反
 
 ### 特殊参数
 *  -t  [工程名称] 切换当前工作的工程
