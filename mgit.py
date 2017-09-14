@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# coding=utf-8
 import xml.dom.minidom
 import os
 import sys
@@ -203,7 +204,10 @@ def load_info():
         if project.get("name") == cur_project_name:
             curProjectDir = project.get("path")
             curModules = get_all_module(project)
-    if not os.path.exists(curProjectDir):
+    if curProjectDir is None:
+        prRed("Wrong current project name!")
+        sys.exit(XML_CONFIG_ERROR)
+    if  not os.path.exists(curProjectDir):
         print("Wrong path in project,do you want to make it(%s)?(y/n):" % curProjectDir)
         ans = input()
         if ans != "y":
@@ -221,6 +225,29 @@ def load_info():
             else:
                 config.enter = False
 
+# 修改当前工作的分支
+def change_branch(is_init_branch,branch_name,module_name):
+    global Tree
+    root = Tree.getroot()
+    cur_project_name = root.get("curProject")
+    all_projects = root.findall("project")
+    # 查找当前使用的是那个project
+    for project in all_projects:
+        if project.get("name") != cur_project_name:
+            continue
+        modules = project.findall("module")
+        for mod in modules:
+            if is_init_branch:
+                tag = mod.find("initBranch")
+            else:
+                tag = mod.find("workBranch")
+            name = mod.find("name")
+            if module_name is not None :
+                if name.text == module_name:
+                    tag.text = branch_name
+            else:
+                tag.text = branch_name
+    Tree.write(configFilePath)
 
 def get_branches():
     for curMod in curModules:
@@ -449,8 +476,36 @@ def help():
         am [new module]     Add a new module to project,you should config the module in .mgit.xml first.
         list                List the information of every module.
         project             List all the projects configured in the .mgit.xml
+        cib [branch_name] [module_name]
+                            Change "initBranch" tag in configure file,and if module_name is specified,would only
+                                change the tag in the module.
+                                
+        cwb [branch_name] [module_name]
+                            Change "workBranch" tag in configure file,and if module_name is specified,would only
+                                change the tag in the module.
+        merge [status]      if status is true  or not specified ,would merge work branch to init branch ,if false,merge init branch
+                                to work branch.
         """
     print(txt)
+
+def merge(is_to_init):
+    #将work分支合并到init分支
+    cmds = []
+    for curMod in curModules:
+        if is_to_init:
+            cmd = 'git checkout  ' + curMod.init_branch +'&& git merge '+curMod.work_branch
+        else:
+            cmd = 'git checkout  ' + curMod.work_branch +'&& git merge '+curMod.init_branch
+        cmds.append(cmd)
+        # os.system('git clone -b ' + curMod.init_branch + ' ' + curMod.git + '  ' + curMod.name)
+        # if config.enter:
+        #     print("\nPress enter to continue,q to quit ")
+        #     ans = input()
+        #     if ans == 'q':
+        #         return
+    execute_cmd(cmds, False)
+
+
 
 
 def cmd_dispatch():
@@ -536,6 +591,37 @@ def cmd_dispatch():
             elif cmd == "project":
                 list_project()
                 break
+            elif cmd == "cib":
+
+                if i + 1 >= len(args):
+                    prRed("Wrong argument,please specify a branch name you want to change!")
+                elif len(args) == 2:
+                    change_branch(True,args[i+1],None)
+                elif len(args) == 3:
+                    change_branch(True,args[i+1],args[i+2])
+                else:
+                    prYellow("Warning:you input too mush parameters,the redundant parameters will be ignored")
+                    change_branch(True,args[i+1],args[i+2])
+                break
+            elif cmd == "cwb":
+                if i + 1 >= len(args):
+                    prRed("Wrong argument,please specify a branch name you want to change!")
+                elif len(args) == 2:
+                    change_branch(False,args[i+1],None)
+                elif len(args) == 3:
+                    change_branch(False,args[i+1],args[i+2])
+                else:
+                    prYellow("Warning:you input too mush parameters,the redundant parameters will be ignored")
+                    change_branch(False,args[i+1],args[i+2])
+                break
+            elif cmd == "merge":
+                if i + 1 >= len(args):
+                    merge(True)
+                else:
+                    merge(args[i+1].lower() == 'true' )
+                break;
+
+
             else:
                 prRed("Wrong argument,please refer to '-h or --help'")
     except getopt.GetoptError:

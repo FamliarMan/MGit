@@ -16,6 +16,11 @@
 12. ib init branch 缩写，能快速切换到所有初始分支
 13. am [module]  在已有的工程中新加入一个module，该module需要现在配置文件中配置好
 14. list 打印当前的工程基本信息
+15. cib [branch_name] [module_name] 修改配置文件中的initBranch节点，如果指定了module_name就只对该module生效，否则
+对所有module生效。
+16. cwb [branch_name] [module_name] 修改配置文件中的workBranch节点，如果指定了module_name就只对该module生效，否则
+对所有module生效。
+17. merge [status] 如果status为true或者未指定，则会将initwork分支合并到work分支，如果为false，则想法
 
 ### 特殊参数
 *  -t  [工程名称] 切换当前工作的工程
