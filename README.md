@@ -21,6 +21,8 @@
 16. cwb [branch_name] [module_name] 修改配置文件中的workBranch节点，如果指定了module_name就只对该module生效，否则
 对所有module生效。
 17. merge [status] 如果status为true或者未指定，则会将init分支合并到work分支，如果为false，则相反
+18. dm [module name] 从配置文件中删除该模块，但不会删除硬盘上的文件
+19. dp [project name] 从配置文件中删除该工程，但不糊删除硬盘上的文件
 
 ### 特殊参数
 *  -t  [工程名称] 切换当前工作的工程

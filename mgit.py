@@ -20,6 +20,7 @@ curModules = []
 curProjects = []
 namePath = {}
 Tree = None
+checkCurProjectCmds = [ 'project','dp', '-t']
 
 
 def prRed(prt): print("\033[91m {}\033[00m".format(prt))
@@ -80,10 +81,21 @@ class Module:
 config = Config()
 
 
-def check_cur_project():
+def check_cur_project(cmd):
+    global checkCurProjectCmds
+    global curProjectDir
+    if checkCurProjectCmds.count(cmd) != 0:
+        return
     if curProjectDir is None:
-        print("You should specify a right project name in 'curProject'!")
+        prRed("You should specify a right project name in 'curProject'!")
         sys.exit(XML_CONFIG_ERROR)
+    if not os.path.exists(curProjectDir):
+        print("Wrong path in project,do you want to make it(%s)?(y/n):" % curProjectDir)
+        ans = input()
+        if ans != "y":
+            sys.exit(XML_CONFIG_ERROR)
+        else:
+            os.mkdir(curProjectDir)
 
 
 # 检查project tag配置是否正确
@@ -164,7 +176,7 @@ def execute_cmd(cmd, is_skip_no_dir=True):
 def get_tree():
     global Tree
     global configFilePath
-    configFilePath = os.path.abspath(".")+"/.mgit.xml"
+    configFilePath = os.path.abspath(".") + "/.mgit.xml"
     # 全局配置文件
     globalFilePath = os.path.join(expanduser("~"), ".mgit.xml")
     if not os.path.exists(configFilePath):
@@ -176,7 +188,7 @@ def get_tree():
     try:
         Tree = ET.parse(configFilePath)
     except xml.etree.ElementTree.ParseError:
-        prRed("You should configure your .mgit.xml right!\n"+"path:"+configFilePath)
+        prRed("You should configure your .mgit.xml right!\n" + "path:" + configFilePath)
         sys.exit(XML_CONFIG_ERROR)
 
 
@@ -204,16 +216,7 @@ def load_info():
         if project.get("name") == cur_project_name:
             curProjectDir = project.get("path")
             curModules = get_all_module(project)
-    if curProjectDir is None:
-        prRed("Wrong current project name!")
-        sys.exit(XML_CONFIG_ERROR)
-    if  not os.path.exists(curProjectDir):
-        print("Wrong path in project,do you want to make it(%s)?(y/n):" % curProjectDir)
-        ans = input()
-        if ans != "y":
-            sys.exit(XML_CONFIG_ERROR)
-        else:
-            os.mkdir(curProjectDir)
+    check_cur_project(sys.argv[1])
     # 加载配置信息
     global config
     cfg_element = root.find("config")
@@ -225,8 +228,9 @@ def load_info():
             else:
                 config.enter = False
 
+
 # 修改当前工作的分支
-def change_branch(is_init_branch,branch_name,module_name):
+def change_branch(is_init_branch, branch_name, module_name):
     global Tree
     root = Tree.getroot()
     cur_project_name = root.get("curProject")
@@ -242,12 +246,13 @@ def change_branch(is_init_branch,branch_name,module_name):
             else:
                 tag = mod.find("workBranch")
             name = mod.find("name")
-            if module_name is not None :
+            if module_name is not None:
                 if name.text == module_name:
                     tag.text = branch_name
             else:
                 tag.text = branch_name
     Tree.write(configFilePath)
+
 
 def get_branches():
     for curMod in curModules:
@@ -263,7 +268,6 @@ def get_branches():
 
 
 def pull():
-    check_cur_project()
     print("Please make sure all your change is commit(y/n):")
     answer = input()
     if answer != 'y':
@@ -272,7 +276,6 @@ def pull():
 
 
 def push():
-    check_cur_project()
     print("Please make sure all your change is commit(y/n):")
     answer = input()
     if answer != 'y':
@@ -281,7 +284,6 @@ def push():
 
 
 def checkout(new_branch):
-    check_cur_project()
     if len(sys.argv) < 3:
         print("Please specific a branch to checkout!")
         return
@@ -289,7 +291,6 @@ def checkout(new_branch):
 
 
 def add():
-    check_cur_project()
     print("Are you sure you want to add all changed files to stage?(y/n)")
     answer = input()
     if answer != 'y':
@@ -298,12 +299,10 @@ def add():
 
 
 def branch():
-    check_cur_project()
     execute_cmd('git branch')
 
 
 def log(module_name):
-    check_cur_project()
     if module_name is None:
         execute_cmd('git log')
     elif module_name not in namePath:
@@ -316,7 +315,6 @@ def log(module_name):
 
 
 def status():
-    check_cur_project()
     execute_cmd('git status')
 
 
@@ -339,7 +337,6 @@ def switch_project(new_project):
 
 def clone():
     global curProjectDir
-    check_cur_project()
     print(curProjectDir)
     if len(os.listdir(curProjectDir)) != 0:
         print("Directory: %s isnt't empty,do you want to clear it?(y/n):" % curProjectDir)
@@ -485,17 +482,21 @@ def help():
                                 change the tag in the module.
         merge [status]      if status is true  or not specified ,would merge work branch to init branch ,if false,merge init branch
                                 to work branch.
+        dm    [module_name] Delete the module from configuration file.
+        dp    [project_name] Delete the project form configuration file.
         """
     print(txt)
 
+
+# 分支合并
 def merge(is_to_init):
-    #将work分支合并到init分支
     cmds = []
     for curMod in curModules:
+        # 将work分支合并到init分支
         if is_to_init:
-            cmd = 'git checkout  ' + curMod.init_branch +'&& git merge '+curMod.work_branch
+            cmd = 'git checkout  ' + curMod.init_branch + '&& git merge ' + curMod.work_branch
         else:
-            cmd = 'git checkout  ' + curMod.work_branch +'&& git merge '+curMod.init_branch
+            cmd = 'git checkout  ' + curMod.work_branch + '&& git merge ' + curMod.init_branch
         cmds.append(cmd)
         # os.system('git clone -b ' + curMod.init_branch + ' ' + curMod.git + '  ' + curMod.name)
         # if config.enter:
@@ -506,10 +507,53 @@ def merge(is_to_init):
     execute_cmd(cmds, False)
 
 
+# 删除module
+def delete_module(module_name):
+    global Tree
+    root = Tree.getroot()
+    cur_project_name = root.get("curProject")
+    all_projects = root.findall("project")
+    # 查找当前使用的是那个project
+    for project in all_projects:
+        if project.get("name") != cur_project_name:
+            continue
+        modules = project.findall("module")
+        for mod in modules:
+            name = mod.find("name").text
+            if module_name == name:
+                print("Are you sure to delete this module?(y/n):", end='')
+                ans = input()
+                if 'y' == ans:
+                    project.remove(mod)
+                    prYellow("Delete module successfully!")
+                    Tree.write(configFilePath)
+                return
+        prRed("No such module!")
+
+
+# 删除工程
+def delete_project(project_name):
+    global Tree
+    root = Tree.getroot()
+    all_projects = root.findall("project")
+    for project in all_projects:
+        name = project.get("name")
+        if name != project_name:
+            continue
+        print("Are you sure to delete this project(" + name + ")?(y/n):", end='')
+        ans = input()
+        if 'y' == ans:
+            root.remove(project)
+            Tree.write(configFilePath)
+            prYellow("Delete project successfully!")
+            Tree.write(configFilePath)
+            return
+    prRed("No such project!")
 
 
 def cmd_dispatch():
     global curModules
+    global needCheckCurProject
     try:
         options, args = getopt.getopt(sys.argv[1:], "hft:c", ["help", "target=", "command"])
         for name, value in options:
@@ -568,6 +612,7 @@ def cmd_dispatch():
                 clone()
                 break
             elif cmd == "path":
+                needCheckCurProject = False
                 path()
                 break
             elif cmd == "each":
@@ -589,6 +634,7 @@ def cmd_dispatch():
                 list_info()
                 break
             elif cmd == "project":
+                needCheckCurProject = False
                 list_project()
                 break
             elif cmd == "cib":
@@ -596,32 +642,43 @@ def cmd_dispatch():
                 if i + 1 >= len(args):
                     prRed("Wrong argument,please specify a branch name you want to change!")
                 elif len(args) == 2:
-                    change_branch(True,args[i+1],None)
+                    change_branch(True, args[i + 1], None)
                 elif len(args) == 3:
-                    change_branch(True,args[i+1],args[i+2])
+                    change_branch(True, args[i + 1], args[i + 2])
                 else:
                     prYellow("Warning:you input too mush parameters,the redundant parameters will be ignored")
-                    change_branch(True,args[i+1],args[i+2])
+                    change_branch(True, args[i + 1], args[i + 2])
                 break
             elif cmd == "cwb":
                 if i + 1 >= len(args):
                     prRed("Wrong argument,please specify a branch name you want to change!")
                 elif len(args) == 2:
-                    change_branch(False,args[i+1],None)
+                    change_branch(False, args[i + 1], None)
                 elif len(args) == 3:
-                    change_branch(False,args[i+1],args[i+2])
+                    change_branch(False, args[i + 1], args[i + 2])
                 else:
                     prYellow("Warning:you input too mush parameters,the redundant parameters will be ignored")
-                    change_branch(False,args[i+1],args[i+2])
+                    change_branch(False, args[i + 1], args[i + 2])
                 break
             elif cmd == "merge":
                 if i + 1 >= len(args):
                     merge(True)
                 else:
-                    merge(args[i+1].lower() == 'true' )
-                break;
-
-
+                    merge(args[i + 1].lower() == 'true')
+                break
+            elif cmd == "dm":
+                if len(args) < 2:
+                    prRed("No module name!")
+                else:
+                    delete_module(args[i + 1])
+                break
+            elif cmd == "dp":
+                needCheckCurProject = False
+                if len(args) < 2:
+                    prRed("No project name!")
+                else:
+                    delete_project(args[i + 1])
+                break
             else:
                 prRed("Wrong argument,please refer to '-h or --help'")
     except getopt.GetoptError:
