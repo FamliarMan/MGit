@@ -214,9 +214,14 @@ def load_info():
         p.path = project.get("path")
         curProjects.append(p)
         if project.get("name") == cur_project_name:
-            curProjectDir = project.get("path")
+            # 有本地配置文件，path就是当前目录
+            if os.path.exists("./.mgit.xml"):
+                curProjectDir = os.path.abspath(".")
+            else:
+                curProjectDir = project.get("path")
             curModules = get_all_module(project)
-    check_cur_project(sys.argv[1])
+    if len(sys.argv) > 1:
+        check_cur_project(sys.argv[1])
     # 加载配置信息
     global config
     cfg_element = root.find("config")
