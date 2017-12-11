@@ -215,7 +215,7 @@ def load_info():
         curProjects.append(p)
         if project.get("name") == cur_project_name:
             # 有本地配置文件，path就是当前目录
-            if os.path.exists("./.mgit.xml"):
+            if os.path.exists("./.mgit.xml") and os.path.abspath(".") != os.path.expanduser("~"):
                 curProjectDir = os.path.abspath(".")
             else:
                 curProjectDir = project.get("path")
@@ -344,7 +344,7 @@ def clone():
     global curProjectDir
     print(curProjectDir)
     if len(os.listdir(curProjectDir)) != 0:
-        print("Directory: %s isnt't empty,do you want to clear it?(y/n):" % curProjectDir)
+        print("Directory: %s isn't empty,do you want to empty it?(y/n):" % curProjectDir)
         answer = input()
         if answer != 'y':
             return
