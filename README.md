@@ -6,7 +6,7 @@
 2. status 能够查看所有模块的状态，实际每个模块执行 git status
 3. pull 能够从远程拉取分支最新数据到本地，实际执行git pull
 4. push 能够将本地提交推送到远程分支，实际执行git push
-5. checkout [branch] 将所有模块切换到一个分支，实际执行git checkout
+5. checkout [branch] [branch_name] 将所有模块切换到一个分支，实际执行git checkout,如果指定了branch_name,则只对该模块生效
 6. branch 查看当前所有模块所在的分支名称,实际执行git branch
 7. log [module name] 该命令能够对指定的module执行git log命令,如果module name为空则对所有module执行该命令。
 8. clone 能够重新clone一个新的工程

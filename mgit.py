@@ -20,7 +20,7 @@ curModules = []
 curProjects = []
 namePath = {}
 Tree = None
-checkCurProjectCmds = [ 'project','dp', '-t']
+checkCurProjectCmds = [ 'project','dp', '-t','update']
 
 
 def prRed(prt): print("\033[91m {}\033[00m".format(prt))
@@ -176,6 +176,7 @@ def execute_cmd(cmd, is_skip_no_dir=True):
 def get_tree():
     global Tree
     global configFilePath
+    # 默认取所在目录下的配置文件
     configFilePath = os.path.abspath(".") + "/.mgit.xml"
     # 全局配置文件
     globalFilePath = os.path.join(expanduser("~"), ".mgit.xml")
@@ -289,10 +290,18 @@ def push():
 
 
 def checkout(new_branch):
+    global curProjectDir
     if len(sys.argv) < 3:
         print("Please specific a branch to checkout!")
         return
-    execute_cmd('git checkout ' + new_branch)
+    elif len(sys.argv) == 3:
+        execute_cmd('git checkout ' + new_branch)
+    elif len(sys.argv) > 3:
+        module_name = sys.argv[3]
+        # 切换某个仓库所在分支
+        module_path = os.path.join(curProjectDir,module_name)
+        os.chdir(module_path)
+        os.system('git checkout '+new_branch)
 
 
 def add():
@@ -361,6 +370,26 @@ def clone():
         #     if ans == 'q':
         #         return
     execute_cmd(cmds, False)
+
+# 更新配置文件后使用次命令来更新代码，主要实现：能够克隆新加的仓库，能够pull每个已有仓库的代码
+def update():
+    global curProjectDir
+    if not os.path.exists(curProjectDir):
+        os.mkdir(curProjectDir)
+    for curMod in curModules:
+        os.chdir(curProjectDir)
+        cur_mod_path = os.path.join(curProjectDir,curMod.name)
+        cur_mod_git_pat = os.path.join(cur_mod_path,'.git')
+        if os.path.exists(cur_mod_git_pat):
+            # 正常情况下pull就好
+            os.chdir(cur_mod_path)
+            os.system('git pull')
+        elif os.path.exists(cur_mod_path):
+            # 仓库在，但.git目录没有了，要删掉旧仓库,从新拉
+            shutil.rmtree(cur_mod_path)
+            os.system('git clone -b ' + curMod.init_branch + ' ' + curMod.git + '  ' + curMod.name)
+        else:
+            os.system('git clone -b ' + curMod.init_branch + ' ' + curMod.git + '  ' + curMod.name)
 
 
 # 打印当前工程所在路径
@@ -684,6 +713,8 @@ def cmd_dispatch():
                 else:
                     delete_project(args[i + 1])
                 break
+            elif cmd == "update":
+                update()
             else:
                 prRed("Wrong argument,please refer to '-h or --help'")
     except getopt.GetoptError:
