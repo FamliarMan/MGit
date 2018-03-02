@@ -14,10 +14,15 @@ FILE_NOT_EXIST = 1
 XML_CONFIG_ERROR = 2
 ARGUMENT_ERROR = 3
 
+# 当前项目的根目录
 curProjectDir = None
+# 当前使用的配置文件路径
 configFilePath = None
+# 当前项目所拥有的所有module
 curModules = []
+# 当前配置文件中的所有项目
 curProjects = []
+# 当前项目的每个模块的名称和地址的映射
 namePath = {}
 Tree = None
 checkCurProjectCmds = [ 'project','dp', '-t','update']
@@ -54,7 +59,8 @@ def handler(signal_num, frame):
 
 class Config:
     enter = True
-
+    # 是否采用交互模式，某些命令如果采用交互模式会在命令执行前进行提醒，如果关闭就不会提醒
+    isInteractive = False
 
 class Project:
     name = ""
@@ -233,6 +239,13 @@ def load_info():
                 config.enter = True
             else:
                 config.enter = False
+        is_interactive = cfg_element.find("interactive")
+        if is_interactive is not None and is_interactive.text is not None:
+            if is_interactive.text.lower() == "true":
+                config.isInteractive = True
+            else:
+                config.isInteractive = False
+
 
 
 # 修改当前工作的分支
@@ -274,6 +287,10 @@ def get_branches():
 
 
 def pull():
+    global config
+    if config.isInteractive is False:
+        execute_cmd('git pull')
+        return
     print("Please make sure all your change is commit(y/n):")
     answer = input()
     if answer != 'y':
@@ -282,6 +299,9 @@ def pull():
 
 
 def push():
+    if config.isInteractive is False:
+        execute_cmd('git push')
+        return
     print("Please make sure all your change is commit(y/n):")
     answer = input()
     if answer != 'y':
@@ -305,6 +325,9 @@ def checkout(new_branch):
 
 
 def add():
+    if config.isInteractive is False:
+        execute_cmd('git add -A')
+        return
     print("Are you sure you want to add all changed files to stage?(y/n)")
     answer = input()
     if answer != 'y':
@@ -432,10 +455,11 @@ def customer_cmd(cmd):
 
 # 检出该项目的初始分支或工作分支
 def checkout_init_or_work_branch(is_init_branch=True):
-    prRed("Please make sure you commit all your files(y/n):")
-    ans = input()
-    if ans == 'n':
-        return
+    if config.isInteractive is True:
+        prRed("Please make sure you commit all your files(y/n):")
+        ans = input()
+        if ans == 'n':
+            return
     cmds = []
     global curModules
     for index in range(len(curModules)):
