@@ -14,6 +14,8 @@ FILE_NOT_EXIST = 1
 XML_CONFIG_ERROR = 2
 ARGUMENT_ERROR = 3
 
+# 控制台编码
+type = sys.getfilesystemencoding()
 curProjectDir = None
 configFilePath = None
 curModules = []
@@ -29,7 +31,7 @@ def prRed(prt): print("\033[91m {}\033[00m".format(prt))
 def prGreen(prt): print("\033[92m {}\033[00m".format(prt))
 
 
-def prYellow(prt): print("\033[93m {}\033[00m".format(prt))
+def prYellow(prt): print("\033[93m {}\033[00m".format(prt.encode('utf-8').decode(type)))
 
 
 def prLightPurple(prt): print("\033[94m {}\033[00m".format(prt))
@@ -313,7 +315,8 @@ def add():
 
 
 def branch():
-    execute_cmd('git branch')
+    for curMod in curModules:
+        prGreen(curMod.name + " : "+curMod.branch)
 
 
 def log(module_name):
@@ -594,6 +597,7 @@ def cmd_dispatch():
             if name in ("-h", "--help"):
                 # help
                 help()
+                print("姜磊")
                 break
             elif name in ("-t", "--target"):
                 switch_project(value)
