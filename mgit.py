@@ -358,7 +358,8 @@ def add():
 
 def branch():
     for curMod in curModules:
-        prGreen(curMod.name + " : "+curMod.branch)
+        #prGreen(curMod.name + " : "+curMod.branch)
+        prGreen("{:<40}:  {:<40}".format(curMod.name,curMod.branch))
 
 
 def log(module_name):
