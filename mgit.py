@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # coding=utf-8
+# -*- coding：utf-8 -*-
 import xml.dom.minidom
 import os
 import sys
@@ -10,12 +11,12 @@ import getopt
 from xml.etree import ElementTree as ET
 from os.path import expanduser
 
+
+type = sys.getdefaultencoding()
 FILE_NOT_EXIST = 1
 XML_CONFIG_ERROR = 2
 ARGUMENT_ERROR = 3
 
-# 控制台编码
-type = sys.getfilesystemencoding()
 # 当前项目的根目录
 curProjectDir = None
 # 当前使用的配置文件路径
@@ -30,28 +31,46 @@ Tree = None
 checkCurProjectCmds = [ 'project','dp', '-t','update']
 
 
-def prRed(prt): print("\033[91m {}\033[00m".format(prt))
+def prRed(prt):
+    global type
+    res = prt.encode('utf-8').decode(type)
+    print("\033[91m {}\033[00m".format(res))
 
 
-def prGreen(prt): print("\033[92m {}\033[00m".format(prt))
+def prGreen(prt):
+    global type
+    res = prt.encode('utf-8').decode(type)
+    print("\033[92m {}\033[00m".format(res))
 
 
-def prYellow(prt): print("\033[93m {}\033[00m".format(prt.encode('utf-8').decode(type)))
+def prLightPurple(prt):
+    global type
+    res = prt.encode('utf-8').decode(type)
+    print("\033[94m {}\033[00m".format(res))
 
 
-def prLightPurple(prt): print("\033[94m {}\033[00m".format(prt))
+def prPurple(prt):
+    global type
+    res = prt.encode('utf-8').decode(type)
+    print("\033[95m {}\033[00m".format(res))
 
 
-def prPurple(prt): print("\033[95m {}\033[00m".format(prt))
+def prCyan(prt):
+    global type
+    res = prt.encode('utf-8').decode(type)
+    print("\033[96m {}\033[00m".format(res))
 
 
-def prCyan(prt): print("\033[96m {}\033[00m".format(prt))
+def prLightGray(prt):
+    global type
+    res = prt.encode('utf-8').decode(type)
+    print("\033[97m {}\033[00m".format(res))
 
 
-def prLightGray(prt): print("\033[97m {}\033[00m".format(prt))
-
-
-def prBlack(prt): print("\033[98m {}\033[00m".format(prt))
+def prBlack(prt):
+    global type
+    res = prt.encode('utf-8').decode(type)
+    print("\033[98m {}\033[00m".format(res))
 
 
 # 按下ctrl+c时触发
@@ -150,7 +169,7 @@ def execute_cmd(cmd, is_skip_no_dir=True):
                 continue
             elif ans == 'n':
                 return
-        prYellow("---------%s-----------" % curMod.path)
+        prGreen( '---------%s-----------' % curMod.path)
         # 对应的目录存在，则进入到该目录中去执行
         if os.path.exists(curMod.path):
             os.chdir(curMod.path)
@@ -426,18 +445,19 @@ def path():
 # 遍历每一个模块然后进行相应的操作
 def each():
     for curMod in curModules:
-        prYellow("---------%s-----------" % curMod.path)
+        prGreen("---------%s-----------" % curMod.path)
+
         if not os.path.exists(curMod.path):
             continue
         os.chdir(curMod.path)
         os.system('git status')
-        prYellow("\n( " + curMod.name + " :q for quit,n  or enter for next or others for command to execute)")
+        prGreen("\n( " + curMod.name + " :q for quit,n  or enter for next or others for command to execute)")
         print(":", end='')
         cmd = input()
         while cmd != 'q' and cmd != 'n' and cmd != '':
             print("---------%s-----------" % curMod.path)
             os.system(cmd)
-            prYellow("\n(q for quit,n or enter for next or others for command to execute)")
+            prGreen("\n(q for quit,n or enter for next or others for command to execute)")
             print(":", end='')
             cmd = input()
         if cmd == 'q':
@@ -491,7 +511,7 @@ def add_module(module_name):
 def list_info():
     global curModules
     for mod in curModules:
-        prYellow("-------------------------------------------------------")
+        prGreen("-------------------------------------------------------")
         print("name:         " + mod.name)
         print("work branch:  " + mod.work_branch)
         print("init branch:  " + mod.init_branch)
@@ -501,7 +521,7 @@ def list_info():
 
 def list_project():
     for p in curProjects:
-        prYellow("-----------------------------------------")
+        prGreen("-----------------------------------------")
         prRed(p.name)
         print(p.path)
 
@@ -586,7 +606,7 @@ def delete_module(module_name):
                 ans = input()
                 if 'y' == ans:
                     project.remove(mod)
-                    prYellow("Delete module successfully!")
+                    prGreen("Delete module successfully!")
                     Tree.write(configFilePath)
                 return
         prRed("No such module!")
@@ -606,7 +626,7 @@ def delete_project(project_name):
         if 'y' == ans:
             root.remove(project)
             Tree.write(configFilePath)
-            prYellow("Delete project successfully!")
+            prGreen("Delete project successfully!")
             Tree.write(configFilePath)
             return
     prRed("No such project!")
@@ -707,7 +727,7 @@ def cmd_dispatch():
                 elif len(args) == 3:
                     change_branch(True, args[i + 1], args[i + 2])
                 else:
-                    prYellow("Warning:you input too mush parameters,the redundant parameters will be ignored")
+                    prGreen("Warning:you input too mush parameters,the redundant parameters will be ignored")
                     change_branch(True, args[i + 1], args[i + 2])
                 break
             elif cmd == "cwb":
@@ -718,7 +738,7 @@ def cmd_dispatch():
                 elif len(args) == 3:
                     change_branch(False, args[i + 1], args[i + 2])
                 else:
-                    prYellow("Warning:you input too mush parameters,the redundant parameters will be ignored")
+                    prGreen("Warning:you input too mush parameters,the redundant parameters will be ignored")
                     change_branch(False, args[i + 1], args[i + 2])
                 break
             elif cmd == "merge":
