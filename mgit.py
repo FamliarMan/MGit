@@ -359,6 +359,8 @@ def add():
 def branch():
     for curMod in curModules:
         #prGreen(curMod.name + " : "+curMod.branch)
+        if curMod.name is None or curMod.branch is None:
+            return
         prGreen("{:<40}:  {:<40}".format(curMod.name,curMod.branch))
 
 
