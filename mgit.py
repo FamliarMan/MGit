@@ -8,9 +8,10 @@ import time
 import shutil
 import signal
 import getopt
+import io
 from xml.etree import ElementTree as ET
 from os.path import expanduser
-
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 type = sys.getdefaultencoding()
 FILE_NOT_EXIST = 1
@@ -33,44 +34,43 @@ checkCurProjectCmds = [ 'project','dp', '-t','update']
 
 def prRed(prt):
     global type
-    res = prt.encode('utf-8').decode(type)
-    print("\033[91m {}\033[00m".format(res))
+    print("\033[91m {}\033[00m".format(res),flush=True)
 
 
 def prGreen(prt):
     global type
     res = prt.encode('utf-8').decode(type)
-    print("\033[92m {}\033[00m".format(res))
+    print("\033[92m {}\033[00m".format(res),flush=True)
 
 
 def prLightPurple(prt):
     global type
     res = prt.encode('utf-8').decode(type)
-    print("\033[94m {}\033[00m".format(res))
+    print("\033[94m {}\033[00m".format(res),flush=True)
 
 
 def prPurple(prt):
     global type
     res = prt.encode('utf-8').decode(type)
-    print("\033[95m {}\033[00m".format(res))
+    print("\033[95m {}\033[00m".format(res),flush=True)
 
 
 def prCyan(prt):
     global type
     res = prt.encode('utf-8').decode(type)
-    print("\033[96m {}\033[00m".format(res))
+    print("\033[96m {}\033[00m".format(res),flush=True)
 
 
 def prLightGray(prt):
     global type
     res = prt.encode('utf-8').decode(type)
-    print("\033[97m {}\033[00m".format(res))
+    print("\033[97m {}\033[00m".format(res),flush=True)
 
 
 def prBlack(prt):
     global type
     res = prt.encode('utf-8').decode(type)
-    print("\033[98m {}\033[00m".format(res))
+    print("\033[98m {}\033[00m".format(res),flush=True)
 
 
 # 按下ctrl+c时触发
