@@ -34,6 +34,7 @@ checkCurProjectCmds = [ 'project','dp', '-t','update']
 
 def prRed(prt):
     global type
+    res = prt.encode('utf-8').decode(type)
     print("\033[91m {}\033[00m".format(res),flush=True)
 
 
@@ -180,7 +181,7 @@ def execute_cmd(cmd, is_skip_no_dir=True):
             else:
                 cur_cmd = cmd
             os.system(cur_cmd)
-            print()
+            print(flush=True)
         # 对应目录不存在
         else:
             # 跳过该命令
@@ -196,7 +197,7 @@ def execute_cmd(cmd, is_skip_no_dir=True):
                 else:
                     cur_cmd = cmd
                 os.system(cur_cmd)
-                print()
+                print(flush=True)
     return
 
 
@@ -376,8 +377,39 @@ def log(module_name):
         os.system('git log')
 
 
-def status():
-    execute_cmd('git status')
+def status(is_detail):
+    if is_detail:
+        # 详情模式
+        execute_cmd('git status')
+        return
+    for curMod in curModules:
+        if not os.path.exists(curMod.path):
+            continue
+        os.chdir(curMod.path)
+        r = os.popen('git status')
+        lines = r.read().splitlines(False)
+        need_operation = ""
+        has_clean_show = False
+        for line in lines:
+            if line.find('use "git pull"') != -1:
+                need_operation += " | need pull"
+            elif line.find('use "git add') != -1 or line.startswith('Untracked files'):
+                if need_operation.find('need add') != -1:
+                    continue
+                need_operation += " | need add"
+            elif line.find("Changes to be committed") != -1:
+                need_operation += " | need commit"
+            elif line.find('use "git push') != -1:
+                need_operation += " | need push"
+            elif line.find('nothing to commit, working directory clean') != -1:
+                has_clean_show = True
+        if len(need_operation) == 0:
+            if has_clean_show:
+                prGreen("{:<40}:  {}".format(curMod.name, 'clean'))
+                continue
+            prRed("{:<40}:  {}".format(curMod.name, 'use "mgit status -d"'))
+            continue
+        prRed("{:<40}:  {}".format(curMod.name, need_operation[3:]))
 
 
 def switch_project(new_project):
@@ -538,7 +570,7 @@ def help():
         -c or --command:[custom cmd]:  Execute the customer git commands for all modules,for example: -c git status.
         ---------------------------------------------------------------------------------------
         add                 Add files of all the module to the index,just like 'git add'.
-        status              Show the working tree status of every module,just like 'git status'.
+        status [-d]         Show the working tree status of every module,just like 'git status',and '-d' show details.
         pull                Fetch from and integrate with another repository or a local branch
                                 for every module,just like 'git pull'.
         push                Update remote refs along with associated objects for every module, 
@@ -659,8 +691,10 @@ def cmd_dispatch():
         for i in range(len(args)):
             cmd = args[i]
             if cmd == "status":
-                get_branches()
-                status()
+                if i+1 < len(args) and args[i+1] == '-d':
+                    status(True)
+                else:
+                    status(False)
                 break
             elif cmd == "pull":
                 get_branches()
